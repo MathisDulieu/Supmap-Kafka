@@ -2,30 +2,19 @@ version: '3.8'
 
 services:
   zookeeper:
-    image: zookeeper:3.8.1
+    build: ./zookeeper
     container_name: zookeeper
     ports:
       - "2181:2181"
-    environment:
-      ZOO_MY_ID: 1
-      ZOO_PORT: 2181
-      ZOO_SERVERS: server.1=zookeeper:2888:3888;2181
-      ZOO_4LW_COMMANDS_WHITELIST: "*"
-      ZOO_STANDALONE_ENABLED: "true"
-      JVMFLAGS: "-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
-      # Définir les chemins dans l'environnement
-      ZOO_DATA_DIR: "/data"
-      ZOO_DATALOG_DIR: "/datalog"
-    # Pas de volumes - Railway gère les volumes via son interface
+    restart: always
     healthcheck:
       test: ["CMD", "zkServer.sh", "status"]
       interval: 10s
       timeout: 5s
       retries: 5
-    restart: always
 
   kafka:
-    image: bitnami/kafka:3.4.1
+    build: ./kafka
     container_name: kafka
     ports:
       - "9092:9092"
@@ -33,30 +22,16 @@ services:
     depends_on:
       - zookeeper
     environment:
-      # Configuration Zookeeper
       KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
-      
-      # Configuration des listeners
-      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,EXTERNAL://:29092
-      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://${KAFKA_ADVERTISED_HOST:-localhost}:29092
-      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
-      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
-      
-      # Autres configurations
-      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: "true"
-      KAFKA_CFG_LOG_RETENTION_HOURS: ${KAFKA_LOG_RETENTION_HOURS:-24}
-      KAFKA_HEAP_OPTS: "-Xmx512m -Xms256m"
-      ALLOW_PLAINTEXT_LISTENER: "yes"
-      # Définir le chemin des logs dans l'environnement
-      KAFKA_CFG_LOG_DIRS: "/opt/bitnami/kafka/data"
-    # Pas de volumes - Railway gère les volumes via son interface
+      KAFKA_ADVERTISED_HOST: ${KAFKA_ADVERTISED_HOST:-localhost}
+      KAFKA_LOG_RETENTION_HOURS: ${KAFKA_LOG_RETENTION_HOURS:-24}
+    restart: always
     healthcheck:
       test: ["CMD-SHELL", "kafka-topics.sh --bootstrap-server localhost:9092 --list"]
       interval: 30s
       timeout: 10s
       retries: 5
       start_period: 30s
-    restart: always
 
   kafka-ui:
     image: provectuslabs/kafka-ui:latest

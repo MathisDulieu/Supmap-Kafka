@@ -1,0 +1,10 @@
+FROM zookeeper:3.8.1
+
+ENV ZOO_MY_ID=1
+ENV ZOO_PORT=2181
+ENV ZOO_SERVERS=server.1=0.0.0.0:2888:3888;2181
+ENV ZOO_4LW_COMMANDS_WHITELIST=*
+ENV ZOO_STANDALONE_ENABLED=true
+ENV JVMFLAGS="-Djava.awt.headless=true -Djava.security.egd=file:/dev/./urandom"
+
+EXPOSE 2181 2888 3888
